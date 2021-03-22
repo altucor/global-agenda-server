@@ -1,6 +1,6 @@
-#include "DataTypesHolder.h"
+#include "DataTypesHolder.hpp"
 
-#include "Utils.h"
+#include "Utils.hpp"
 
 DataTypesHolder *DataTypesHolder::m_this = nullptr;
 

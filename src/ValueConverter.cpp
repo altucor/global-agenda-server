@@ -1,4 +1,4 @@
-#include "ValueConverter.h"
+#include "ValueConverter.hpp"
 
 bool ValueConverter::isEnoughToRead(packet_iterator_t &it, packet_iterator_t end, size_t size)
 {

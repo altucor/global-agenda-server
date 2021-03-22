@@ -20,6 +20,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
 
 add_compile_options(-m64)
 
+find_library(PTHREAD_LIBRARY pthread)
 include_directories(include)
 file(GLOB SOURCE_FILES "src/*.cpp")
 

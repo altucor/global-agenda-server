@@ -1,7 +1,7 @@
 #ifndef DATA_TYPES_HOLDER_H
 #define DATA_TYPES_HOLDER_H
 
-#include "DataType.h"
+#include "DataType.hpp"
 #include <map>
 #include <iostream>
 

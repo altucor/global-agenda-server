@@ -1,12 +1,12 @@
 #ifndef DATA_ENTRY_H
 #define DATA_ENTRY_H
 
-#include "DataTypesHolder.h"
+#include "DataTypesHolder.hpp"
 #include <iostream>
 #include <stdint.h>
 #include <vector>
 
-#include "ValueConverter.h"
+#include "ValueConverter.hpp"
 
 class DataEntry
 {

@@ -1,7 +1,7 @@
 #ifndef DATA_TYPE_H
 #define DATA_TYPE_H
 
-#include "EnumDataTypes.h"
+#include "EnumDataTypes.hpp"
 #include <vector>
 
 enum CMD_TYPE : uint8_t 

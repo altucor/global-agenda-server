@@ -1,6 +1,6 @@
-#include "DataEntry.h"
+#include "DataEntry.hpp"
 
-#include "Utils.h"
+#include "Utils.hpp"
 
 std::vector<DataType> g_dataTypes();
 
