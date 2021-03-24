@@ -55,7 +55,11 @@ std::vector<uint8_t> DataEntry::m_parse(CMD_CODE cmd, packet_iterator_t &it,
                 break;
         }
         if(ValueConverter::isEnoughToRead(it, end, dynamicSize))
-            return std::vector<uint8_t>(it, it += dynamicSize);
+        {
+            packet_iterator_t start_copy = it;
+            it += dynamicSize;
+            return std::vector<uint8_t>(start_copy, it);
+        }
     }
     return std::vector<uint8_t>();
 }
