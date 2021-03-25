@@ -14,6 +14,7 @@ public:
     bool setPacket(std::vector<uint8_t> &input);
     std::vector<uint8_t> build();
     bool appendEntry(DataEntry &entry);
+    bool appendEntry(DataEntry entry);
     DataEntry getNextEntry();
     DataEntry getEntryByCmd(CMD_CODE cmd);
 private:

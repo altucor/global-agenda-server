@@ -20,40 +20,8 @@
 #define TCP_MAIN_PORT 9000
 #define BUFFER_SIZE 0x1000
 
-#define CMD_SESSION_GUID 0x473
-
 using boost::asio::ip::tcp;
 
-typedef struct packet
-{
-    uint16_t size;
-    uint8_t *data;
-} packet_t;
-
-typedef struct packet_data
-{
-    uint16_t cmd;
-    uint8_t *data;
-} packet_data_t;
-
-typedef struct end_communication
-{
-    uint16_t err_code;
-} end_communication_t;
-
-typedef struct first_request
-{
-    uint16_t unk_0;
-    uint16_t unk_1;
-    uint32_t client_version;
-} first_request_t;
-
-typedef struct _GUID {
-    unsigned long  Data1;
-    unsigned short Data2;
-    unsigned short Data3;
-    unsigned char  Data4[8];
-} GUID;
 
 void dbg_print(std::vector<uint8_t> &buf)
 {
@@ -69,22 +37,10 @@ void dbg_print(std::vector<uint8_t> &buf)
     
 }
 
-/*
-    Possible packet structure
-    uint16_t packet_size
-    uint16_t packet index
-    uint16_t marshal_table_index
-    uint8_t[] payload_data
-    uint16_t marshal_table_index
-    uint8_t[] payload_data
-    ...
-    uint16_t marshal_table_index
-    uint8_t[] payload_data
-*/
 
 void craft_first_reponse(std::vector<uint8_t> &data)
 {
-    
+    /*
     std::vector<uint8_t> guidPayload{ 
         0x40, 0x41, 0x42, 0x43, 
         0x44, 0x45, 0x46, 0x47, 
@@ -95,10 +51,11 @@ void craft_first_reponse(std::vector<uint8_t> &data)
     Packet response;
     response.appendEntry(guidEntry);
     data = response.build();
+    */
 
     //first_response.resize(0x473);
     //std::fill(first_response.begin(), first_response.end(), 0x41);
-
+    /*
     uint8_t header_size = 2;
     uint16_t packet_size = 2 + 2 + 2 + 8 + 8;
     uint16_t cmd_entries_count = 0x3B;
@@ -106,6 +63,7 @@ void craft_first_reponse(std::vector<uint8_t> &data)
     uint16_t session_guid_cmd = CMD_SESSION_GUID;
     uint64_t uuid_part_1 = 0x4142434445464748;
     uint64_t uuid_part_2 = 0x4950515253545556;
+    */
     // possible uuid consists only of 0x10(16) bytes
     /*
         Really readed bytes by client, all other is skipped
@@ -127,7 +85,7 @@ void craft_first_reponse(std::vector<uint8_t> &data)
 
         B7 14 57 C5 E0 6F AD 0D D8 3F 40 2C D7 9B 8F 4A 27 6E 34 11 D2 B9 8A 47 C0 7D 60 00 38 DE 19 00 - possible crypto hash
     */
-
+   /*
     data.resize(packet_size + header_size);
     memcpy(&data[0], &packet_size, sizeof(packet_size));
     memcpy(&data[2], &cmd_entries_count, sizeof(cmd_entries_count));
@@ -135,6 +93,56 @@ void craft_first_reponse(std::vector<uint8_t> &data)
     memcpy(&data[6], &session_guid_cmd, sizeof(session_guid_cmd));
     memcpy(&data[8], &uuid_part_1, sizeof(uuid_part_1));
     memcpy(&data[16], &uuid_part_2, sizeof(uuid_part_2));
+    */
+}
+
+void get_session_guid(std::vector<uint8_t> &data)
+{
+    std::vector<uint8_t> guidPayload{ 
+        0x40, 0x41, 0x42, 0x43, 
+        0x44, 0x45, 0x46, 0x47, 
+        0x48, 0x49, 0x50, 0x51, 
+        0x52, 0x53, 0x54, 0x55
+    };
+
+    Packet response;
+    response.appendEntry(DataEntry(CMD_CODE::SESSION_GUID, guidPayload));
+    data = response.build();
+}
+
+void get_finish_login(std::vector<uint8_t> &data)
+{
+    bool success_flag = true;
+
+    std::vector<uint8_t> guidPayload{ 
+        0x40, 0x41, 0x42, 0x43, 
+        0x44, 0x45, 0x46, 0x47, 
+        0x48, 0x49, 0x50, 0x51, 
+        0x52, 0x53, 0x54, 0x55
+    };
+
+    Packet response;
+    response.appendEntry(DataEntry(CMD_CODE::SUCCESS, success_flag));
+    response.appendEntry(DataEntry(CMD_CODE::SESSION_GUID, guidPayload));
+    //response.appendEntry(DataEntry(CMD_CODE::GAME_BITS, guidPayload));
+    //response.appendEntry(DataEntry(CMD_CODE::NET_ACCESS_FLAGS, guidPayload));
+    //response.appendEntry(DataEntry(CMD_CODE::AFK_TIMEOUT_SEC, guidPayload));
+    //response.appendEntry(DataEntry(CMD_CODE::DISPLAY_EULA_FLAG, guidPayload));
+    //response.appendEntry(DataEntry(CMD_CODE::PLAYER_NAME, guidPayload));
+
+    //response.appendEntry(DataEntry(CMD_CODE::DATA_SET, guidPayload));
+    //response.appendEntry(DataEntry(CMD_CODE::SYS_SITE_ID, guidPayload));
+    //response.appendEntry(DataEntry(CMD_CODE::NAME_MSG_ID, guidPayload));
+    //response.appendEntry(DataEntry(CMD_CODE::DATA_SET_MAP_CONFIGS, guidPayload));
+    //response.appendEntry(DataEntry(CMD_CODE::MAP_GAME_ID, guidPayload));
+    //response.appendEntry(DataEntry(CMD_CODE::FRIENDLY_NAME_MSG_ID, guidPayload));
+    
+    
+    
+    
+    
+    
+    data = response.build();
 }
 
 void session(tcp::socket sock)
@@ -205,9 +213,9 @@ void test_build_packet()
         0x48, 0x49, 0x50, 0x51, 
         0x52, 0x53, 0x54, 0x55
     };
-    DataEntry guidEntry(CMD_CODE::SESSION_GUID, guidPayload);
+    
     Packet response;
-    response.appendEntry(guidEntry);
+    response.appendEntry(DataEntry(CMD_CODE::SESSION_GUID, guidPayload));
     std::vector<uint8_t> data;
     data = response.build();
     dbg_print(data);

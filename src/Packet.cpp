@@ -54,6 +54,12 @@ bool Packet::appendEntry(DataEntry &entry)
     return true;
 }
 
+bool Packet::appendEntry(DataEntry entry)
+{
+    m_entries.push_back(entry);
+    return true;
+}
+
 DataEntry Packet::getNextEntry()
 {
     return DataEntry();
