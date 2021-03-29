@@ -17,10 +17,12 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
+#include "Server.hpp"
+
 #define TCP_MAIN_PORT 9000
 #define BUFFER_SIZE 0x1000
 
-using boost::asio::ip::tcp;
+//using boost::asio::ip::tcp;
 
 
 void dbg_print(std::vector<uint8_t> &buf)
@@ -96,6 +98,7 @@ void craft_first_reponse(std::vector<uint8_t> &data)
     */
 }
 
+/*
 void get_session_guid(std::vector<uint8_t> &data)
 {
     std::vector<uint8_t> guidPayload{ 
@@ -109,7 +112,9 @@ void get_session_guid(std::vector<uint8_t> &data)
     response.appendEntry(DataEntry(CMD_CODE::SESSION_GUID, guidPayload));
     data = response.build();
 }
+*/
 
+/*
 void get_finish_login(std::vector<uint8_t> &data)
 {
     bool success_flag = true;
@@ -144,14 +149,13 @@ void get_finish_login(std::vector<uint8_t> &data)
     
     data = response.build();
 }
+*/
 
+/*
 void session(tcp::socket sock)
 {
     std::cout << "New Client connected\n";
-    std::vector<uint8_t> first_response;
-    craft_first_reponse(first_response);
-    std::cout << "Built packet:\n";
-    dbg_print(first_response);
+    
     try
     {
         for (;;)
@@ -169,18 +173,26 @@ void session(tcp::socket sock)
             // here add parsing of several packets, like if one stream contains several packets
             /*
                 04 00 8E 00 00 00 04 00 8E 00 00 00 04 00 8E 00 00 00 04 00 8E 00 00 00
-            */
+            *
             std::vector<uint8_t>::iterator start = buffer.begin();
             std::vector<uint8_t>::iterator end = buffer.end();
+            std::vector<uint8_t> response;
             while(start != end)
             {
                 Packet packet(start, end);
+                if(buffer.size() == 12) // version packet
+                {
+                    get_session_guid(response);
+                }
+                else if(buffer.size() == 152) // first auth step
+                {
+                    get_finish_login(response);
+                }
             }
-            //for(int i=0; i<1000; i++)
-            //{
-                sleep(1);
-                boost::asio::write(sock, boost::asio::buffer(first_response.data(), first_response.size()));
-            //}
+            sleep(1);
+            std::cout << "Built response packet:\n";
+            dbg_print(response);
+            boost::asio::write(sock, boost::asio::buffer(response.data(), response.size()));
         }
     }
     catch (std::exception& e)
@@ -188,7 +200,9 @@ void session(tcp::socket sock)
         std::cerr << "Exception in thread: " << e.what() << "\n";
     }
 }
+*/
 
+/*
 void server(boost::asio::io_context& io_context, unsigned short port)
 {
     tcp::acceptor a(io_context, tcp::endpoint(tcp::v4(), port));
@@ -197,6 +211,7 @@ void server(boost::asio::io_context& io_context, unsigned short port)
         std::thread(session, a.accept()).detach();
     }
 }
+*/
 
 void test_parse_packet()
 {
@@ -213,7 +228,7 @@ void test_build_packet()
         0x48, 0x49, 0x50, 0x51, 
         0x52, 0x53, 0x54, 0x55
     };
-    
+
     Packet response;
     response.appendEntry(DataEntry(CMD_CODE::SESSION_GUID, guidPayload));
     std::vector<uint8_t> data;
@@ -228,10 +243,13 @@ int main(int argc, char* argv[])
     //return 0;
     
     
+
     try
     {
         boost::asio::io_context io_context;
-        server(io_context, TCP_MAIN_PORT);
+        //server(io_context, TCP_MAIN_PORT);
+        Server server(TCP_MAIN_PORT);
+        server.start();
     }
     catch (std::exception& e)
     {

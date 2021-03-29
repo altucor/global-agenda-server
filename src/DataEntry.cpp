@@ -88,6 +88,12 @@ DataEntry::DataEntry(CMD_CODE cmd, uint16_t value)
     m_data = ValueConverter::from_uint16(value);
 }
 
+DataEntry::DataEntry(CMD_CODE cmd, bool value)
+    : m_cmd(cmd)
+{
+    m_data = ValueConverter::from_bool(value);
+}
+
 DataEntry::~DataEntry()
 {
 

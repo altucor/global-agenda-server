@@ -70,3 +70,8 @@ std::vector<uint8_t> ValueConverter::from_uint64(uint64_t data)
 {
     return ValueConverter::from_uint_to_vector(data, sizeof(uint64_t));
 }
+
+std::vector<uint8_t> ValueConverter::from_bool(bool data)
+{
+    return ValueConverter::from_uint8(data);
+}

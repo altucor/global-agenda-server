@@ -16,6 +16,7 @@ public:
     DataEntry(std::vector<uint8_t> &data);
     DataEntry(CMD_CODE cmd, std::vector<uint8_t> &data);
     DataEntry(CMD_CODE cmd, uint16_t value);
+    DataEntry(CMD_CODE cmd, bool value);
     ~DataEntry();
     CMD_CODE getCmd();
     std::vector<uint8_t> build();

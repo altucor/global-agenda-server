@@ -37,7 +37,7 @@ std::vector<uint8_t> Packet::build()
     }
 
     std::vector<uint8_t> outData;
-    DataEntry entriesCountObject = DataEntry(CMD_CODE::APPLICATION_VALUE, m_entries.size());
+    DataEntry entriesCountObject = DataEntry(CMD_CODE::APPLICATION_VALUE, (uint16_t)m_entries.size());
     std::vector<uint8_t> entriesCountPayload = entriesCountObject.build();
     payload.insert(payload.begin(), entriesCountPayload.begin(), entriesCountPayload.end()); // append count of entries
     uint16_t payloadSize = payload.size();
