@@ -6,7 +6,7 @@
 #include <iostream>
 
 /*
- * Singleton class for golding all types
+ * Singleton class for holding all types
  */
 
 class DataTypesHolder

@@ -20,9 +20,6 @@
 #include "Server.hpp"
 
 #define TCP_MAIN_PORT 9000
-#define BUFFER_SIZE 0x1000
-
-//using boost::asio::ip::tcp;
 
 
 void dbg_print(std::vector<uint8_t> &buf)
@@ -38,180 +35,6 @@ void dbg_print(std::vector<uint8_t> &buf)
     //std::cout << "Full " << buf.data() << std::endl;
     
 }
-
-
-void craft_first_reponse(std::vector<uint8_t> &data)
-{
-    /*
-    std::vector<uint8_t> guidPayload{ 
-        0x40, 0x41, 0x42, 0x43, 
-        0x44, 0x45, 0x46, 0x47, 
-        0x48, 0x49, 0x50, 0x51, 
-        0x52, 0x53, 0x54, 0x55
-    };
-    DataEntry guidEntry(CMD_CODE::SESSION_GUID, guidPayload);
-    Packet response;
-    response.appendEntry(guidEntry);
-    data = response.build();
-    */
-
-    //first_response.resize(0x473);
-    //std::fill(first_response.begin(), first_response.end(), 0x41);
-    /*
-    uint8_t header_size = 2;
-    uint16_t packet_size = 2 + 2 + 2 + 8 + 8;
-    uint16_t cmd_entries_count = 0x3B;
-    uint16_t entries_count = 1;
-    uint16_t session_guid_cmd = CMD_SESSION_GUID;
-    uint64_t uuid_part_1 = 0x4142434445464748;
-    uint64_t uuid_part_2 = 0x4950515253545556;
-    */
-    // possible uuid consists only of 0x10(16) bytes
-    /*
-        Really readed bytes by client, all other is skipped
-        debug714:0A1F8120 dq 4142434445464748h
-        debug714:0A1F8128 dq 5453525151524950h
-    */
-
-    // 0x01 = nodees count
-    // 0x105 = index in flag table
-
-    /*
-        Client session uuid converted to HEX string
-        Stack[000061B8]:0019E604 a45464748434441:
-        Stack[000061B8]:0019E604 text "UTF-16LE", '45464748-4344-4142-5655-545352515049',0
-
-        CryptoProvider creates this string
-        Stack[000061B8]:0019DD80 aSerega96123fa0:
-        Stack[000061B8]:0019DD80 text "UTF-16LE", 'serega96123FA00CDF5-8D87-4a76-BEE1-D9E483220C13',0
-
-        B7 14 57 C5 E0 6F AD 0D D8 3F 40 2C D7 9B 8F 4A 27 6E 34 11 D2 B9 8A 47 C0 7D 60 00 38 DE 19 00 - possible crypto hash
-    */
-   /*
-    data.resize(packet_size + header_size);
-    memcpy(&data[0], &packet_size, sizeof(packet_size));
-    memcpy(&data[2], &cmd_entries_count, sizeof(cmd_entries_count));
-    memcpy(&data[4], &entries_count, sizeof(entries_count));
-    memcpy(&data[6], &session_guid_cmd, sizeof(session_guid_cmd));
-    memcpy(&data[8], &uuid_part_1, sizeof(uuid_part_1));
-    memcpy(&data[16], &uuid_part_2, sizeof(uuid_part_2));
-    */
-}
-
-/*
-void get_session_guid(std::vector<uint8_t> &data)
-{
-    std::vector<uint8_t> guidPayload{ 
-        0x40, 0x41, 0x42, 0x43, 
-        0x44, 0x45, 0x46, 0x47, 
-        0x48, 0x49, 0x50, 0x51, 
-        0x52, 0x53, 0x54, 0x55
-    };
-
-    Packet response;
-    response.appendEntry(DataEntry(CMD_CODE::SESSION_GUID, guidPayload));
-    data = response.build();
-}
-*/
-
-/*
-void get_finish_login(std::vector<uint8_t> &data)
-{
-    bool success_flag = true;
-
-    std::vector<uint8_t> guidPayload{ 
-        0x40, 0x41, 0x42, 0x43, 
-        0x44, 0x45, 0x46, 0x47, 
-        0x48, 0x49, 0x50, 0x51, 
-        0x52, 0x53, 0x54, 0x55
-    };
-
-    Packet response;
-    response.appendEntry(DataEntry(CMD_CODE::SUCCESS, success_flag));
-    response.appendEntry(DataEntry(CMD_CODE::SESSION_GUID, guidPayload));
-    //response.appendEntry(DataEntry(CMD_CODE::GAME_BITS, guidPayload));
-    //response.appendEntry(DataEntry(CMD_CODE::NET_ACCESS_FLAGS, guidPayload));
-    //response.appendEntry(DataEntry(CMD_CODE::AFK_TIMEOUT_SEC, guidPayload));
-    //response.appendEntry(DataEntry(CMD_CODE::DISPLAY_EULA_FLAG, guidPayload));
-    //response.appendEntry(DataEntry(CMD_CODE::PLAYER_NAME, guidPayload));
-
-    //response.appendEntry(DataEntry(CMD_CODE::DATA_SET, guidPayload));
-    //response.appendEntry(DataEntry(CMD_CODE::SYS_SITE_ID, guidPayload));
-    //response.appendEntry(DataEntry(CMD_CODE::NAME_MSG_ID, guidPayload));
-    //response.appendEntry(DataEntry(CMD_CODE::DATA_SET_MAP_CONFIGS, guidPayload));
-    //response.appendEntry(DataEntry(CMD_CODE::MAP_GAME_ID, guidPayload));
-    //response.appendEntry(DataEntry(CMD_CODE::FRIENDLY_NAME_MSG_ID, guidPayload));
-    
-    
-    
-    
-    
-    
-    data = response.build();
-}
-*/
-
-/*
-void session(tcp::socket sock)
-{
-    std::cout << "New Client connected\n";
-    
-    try
-    {
-        for (;;)
-        {
-            std::vector<uint8_t> buffer(BUFFER_SIZE);
-            boost::system::error_code error;
-            size_t length = sock.read_some(boost::asio::buffer(buffer.data(), buffer.size()), error);
-            if (error == boost::asio::error::eof)
-                break; // Connection closed cleanly by peer.
-            else if (error)
-                throw boost::system::system_error(error); // Some other error.
-            std::cout << "Received packet size: " << length << std::endl;
-            buffer.resize(length);
-            dbg_print(buffer);
-            // here add parsing of several packets, like if one stream contains several packets
-            /*
-                04 00 8E 00 00 00 04 00 8E 00 00 00 04 00 8E 00 00 00 04 00 8E 00 00 00
-            *
-            std::vector<uint8_t>::iterator start = buffer.begin();
-            std::vector<uint8_t>::iterator end = buffer.end();
-            std::vector<uint8_t> response;
-            while(start != end)
-            {
-                Packet packet(start, end);
-                if(buffer.size() == 12) // version packet
-                {
-                    get_session_guid(response);
-                }
-                else if(buffer.size() == 152) // first auth step
-                {
-                    get_finish_login(response);
-                }
-            }
-            sleep(1);
-            std::cout << "Built response packet:\n";
-            dbg_print(response);
-            boost::asio::write(sock, boost::asio::buffer(response.data(), response.size()));
-        }
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << "Exception in thread: " << e.what() << "\n";
-    }
-}
-*/
-
-/*
-void server(boost::asio::io_context& io_context, unsigned short port)
-{
-    tcp::acceptor a(io_context, tcp::endpoint(tcp::v4(), port));
-    for (;;)
-    {
-        std::thread(session, a.accept()).detach();
-    }
-}
-*/
 
 void test_parse_packet()
 {
@@ -241,8 +64,6 @@ int main(int argc, char* argv[])
     //test_parse_packet();
     //test_build_packet();
     //return 0;
-    
-    
 
     try
     {
@@ -287,19 +108,19 @@ Second response after sending uuid
 96 00 - total package size
     3B 00 - cmd entries count
         06 00 - count of entries
-    73 04 - cmd session id
+    73 04 - SESSION_GUID - cmd session id
         48 47 46 45 44 43 42 41 56 55 54 53 52 51 50 49 - session id generated by the server
-    2D 05 - cmd login name
+    2D 05 - USER_NAME - cmd login name
         08 00 - size
         73 65 72 65 67 61 39 36 - user login
-    71 00 - encrypted auth payload
+    71 00 - BIN_BLOB - encrypted auth payload
         58 00 00 00 - size
         8D 4D CA 3E 6F 10 8F 1C EE 74 1B 71 F9 DC 1B E3 51 4A 46 A0 51 FB 5C A3 31 B7 BC BE 7A 68 28 66 A5 99 DA 6D 28 7C B1 F6 24 38 79 8F 3A FE 73 72 93 40 9A 4D 2D 87 5A 42 AD 29 82 BC D2 86 3E 27 0F CF 2A 7A 67 C4 A3 BA A6 8E CF 78 7A 71 6E 22 4D 90 B3 10 4D B3 B1 14 
-    36 05 - cmd client version
+    36 05 - VERSION - cmd client version
         01 00 05 01 - version value
-    DA 04 
+    DA 04 - SYS_SITE_ID
         00 00 00 00 
-    C5 04 
+    C5 04 - STEAM_ID
         A5 A6 B8 03 01 00 10 01
 
 

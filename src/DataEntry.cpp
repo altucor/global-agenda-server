@@ -2,8 +2,13 @@
 
 #include "Utils.hpp"
 
-std::vector<DataType> g_dataTypes();
+#include <algorithm>
 
+#include <boost/log/trivial.hpp>
+
+#define MAX_TEXT_SIZE 16
+
+std::vector<DataType> g_dataTypes();
 
 DataEntry::DataEntry()
 {
@@ -92,6 +97,20 @@ DataEntry::DataEntry(CMD_CODE cmd, bool value)
     : m_cmd(cmd)
 {
     m_data = ValueConverter::from_bool(value);
+}
+
+DataEntry::DataEntry(CMD_CODE cmd, double value)
+    : m_cmd(cmd)
+{
+    m_data = ValueConverter::from_double(value);
+}
+
+DataEntry::DataEntry(CMD_CODE cmd, const std::string &value)
+    : m_cmd(cmd)
+{
+    //std::copy_n(value.begin(), MAX_TEXT_SIZE, std::back_inserter(m_data));
+    std::copy(value.begin(), value.end(),
+        std::back_inserter(m_data));
 }
 
 DataEntry::~DataEntry()
@@ -185,10 +204,12 @@ bool DataEntry::valid()
 
 void DataEntry::dbg_print()
 {
-    std::cout << "DataEntry cmd 0x";
-    Utils::printHexValue((uint16_t)m_cmd);
-    std::cout << "\nData: ";
-    Utils::printHexBuffer(m_data);
+    BOOST_LOG_TRIVIAL(info) << "--- DataEntry ---";
+    BOOST_LOG_TRIVIAL(info) << "DataEntry cmd " << m_cmd;
+    //Utils::printHexValue((uint16_t)m_cmd);
+    BOOST_LOG_TRIVIAL(info) << "Data: " << m_data.data();
+    //Utils::printHexBuffer(m_data);
+    BOOST_LOG_TRIVIAL(info) << "--- DataEntry END ---";
 }
 
 void DataEntry::m_build(std::vector<uint8_t> &data)

@@ -1,5 +1,6 @@
 #include "Client.hpp"
 #include "Packet.hpp"
+#include "Logger.hpp"
 
 #include <iostream>
 
@@ -8,7 +9,8 @@
 Client::Client(tcp::socket socket)
     : m_socket(std::move(socket))
 {
-    std::cout << "New client connected\n";
+    BOOST_LOG_TRIVIAL(info) << "New client connected";
+    //Log<<
 }
 
 void Client::start()
@@ -57,14 +59,21 @@ void get_finish_login(std::vector<uint8_t> &data)
     //response.appendEntry(DataEntry(CMD_CODE::MAP_GAME_ID, guidPayload));
     //response.appendEntry(DataEntry(CMD_CODE::FRIENDLY_NAME_MSG_ID, guidPayload));
     
-    
-    
-    
-    
-    
     data = response.build();
 }
 
+void get_banned_until(std::vector<uint8_t> &data)
+{
+    Packet response;
+
+    double banned = 0.0;
+    response.appendEntry(DataEntry(CMD_CODE::BANNED_UNTIL_DATETIME, banned));
+
+    std::string text_val = "AAAAAAAAAAAAAAAA";
+    response.appendEntry(DataEntry(CMD_CODE::TEXT_VALUE, text_val));
+
+    data = response.build();
+}
 
 void Client::m_read()
 {
@@ -77,8 +86,10 @@ void Client::m_read()
         {
             if (ec)
             {
-                std::cout << "Error occured in read handler\n";
+                BOOST_LOG_TRIVIAL(error) << "Error occured in read handler";
             }
+
+            BOOST_LOG_TRIVIAL(info) << "----------------- NEW PKT --------------------";
 
             m_recv_buffer.resize(bytes_transfered);
             std::vector<uint8_t>::iterator start = m_recv_buffer.begin();
@@ -87,17 +98,19 @@ void Client::m_read()
             while(start != end)
             {
                 Packet packet(start, end);
-                std::cout << "Packet processing finished\n";
-                std::cout << "Buffer recv size: " << m_recv_buffer.size() << "\n";
+                BOOST_LOG_TRIVIAL(info) << "Packet processing finished";
+                BOOST_LOG_TRIVIAL(info) << "Buffer recv size: " << m_recv_buffer.size();
                 if(m_recv_buffer.size() == 12) // version packet
                 {
-                    std::cout << "Responding on version data\n";
+                    BOOST_LOG_TRIVIAL(info) << "Responding on version data";
                     get_session_guid(response);
                 }
-                else if(m_recv_buffer.size() == 152) // first auth step
+                //else if(m_recv_buffer.size() == 152) // first auth step
+                else
                 {
-                    std::cout << "Responding on auth step data\n";
-                    get_finish_login(response);
+                    BOOST_LOG_TRIVIAL(info) << "Responding on auth step data";
+                    //get_finish_login(response);
+                    get_banned_until(response);
                 }
                 m_write(response);
             }
@@ -114,7 +127,7 @@ void Client::m_write(const std::vector<uint8_t> &data)
         {
             if (ec)
             {
-                std::cout << "Error occured in write handler\n";
+                BOOST_LOG_TRIVIAL(error) << "Error occured in write handler";
             }
             m_read();
         }

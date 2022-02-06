@@ -1,5 +1,7 @@
 #include "ValueConverter.hpp"
 
+#define DOUBLE_SIZE 8
+
 bool ValueConverter::isEnoughToRead(packet_iterator_t &it, packet_iterator_t end, size_t size)
 {
     //std::cout << "start " << (uint64_t)it.base() << " size " << size << " end " << (uint64_t)end.base() << "\n";
@@ -74,4 +76,14 @@ std::vector<uint8_t> ValueConverter::from_uint64(uint64_t data)
 std::vector<uint8_t> ValueConverter::from_bool(bool data)
 {
     return ValueConverter::from_uint8(data);
+}
+
+std::vector<uint8_t> ValueConverter::from_double(double data)
+{
+    std::vector<uint8_t> arr;
+    for(uint64_t i = 0; i < DOUBLE_SIZE; i++)
+    {
+        arr.push_back(0x00);
+    }
+    return arr;
 }

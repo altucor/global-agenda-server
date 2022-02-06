@@ -23,6 +23,7 @@ public:
     static std::vector<uint8_t> from_uint32(uint32_t data);
     static std::vector<uint8_t> from_uint64(uint64_t data);
     static std::vector<uint8_t> from_bool(bool data);
+    static std::vector<uint8_t> from_double(double data);
 };
 
 #endif // VALUE_CONVERTER_H

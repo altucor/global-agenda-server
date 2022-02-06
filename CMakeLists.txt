@@ -1,31 +1,93 @@
 cmake_minimum_required(VERSION 3.15.2)
 
-project(ga-poc LANGUAGES CXX)
+project(global-agenda-server C CXX)
+IF(MSVC)
+  set(PROJECT_NAME "${PROJECT_NAME}-win")
+ELSEIF(APPLE)
+  set(PROJECT_NAME "${PROJECT_NAME}-osx")
+ELSEIF(UNIX)
+  set(PROJECT_NAME "${PROJECT_NAME}-linux")
+ENDIF()
 
-set(Boost_USE_STATIC_LIBS OFF) 
-set(Boost_USE_MULTITHREADED ON)  
-set(Boost_USE_STATIC_RUNTIME OFF) 
-find_package(Boost 1.71.0 REQUIRED) 
+set(REQUIRED_BOOST_VERSION 1.75.0)
+IF(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc /MT")
+ELSE()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -static-libstdc++")
+ENDIF(MSVC)
 
-if(Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS})
+IF(CMAKE_BUILD_TYPE MATCHES Debug)
+  message("Debug build.")
+ELSEIF(CMAKE_BUILD_TYPE MATCHES Release)
+  message("Release build.")
+ELSE()
+  message(" ! ! ! Unknown build type.")
+ENDIF()
+
+message("CMAKEFLAGS DUMP: ${CMAKE_CXX_FLAGS}")
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
+
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
+  message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
+  file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/v0.16.1/conan.cmake"
+                "${CMAKE_BINARY_DIR}/conan.cmake"
+                EXPECTED_HASH SHA256=396e16d0f5eabdc6a14afddbcfff62a54a7ee75c6da23f32f7a31bc85db23484
+                TLS_VERIFY ON)
 endif()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-all")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FORTIFY_SOURCE=2")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=thread")
+include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-add_compile_options(-m64)
+conan_cmake_configure(REQUIRES boost/${REQUIRED_BOOST_VERSION}
+                      GENERATORS cmake_find_package)
 
-find_library(PTHREAD_LIBRARY pthread)
-include_directories(include)
-file(GLOB SOURCE_FILES "src/*.cpp")
+conan_cmake_autodetect(settings)
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES})
-target_link_libraries(${PROJECT_NAME} ${PTHREAD_LIBRARY})
-if(Boost_FOUND)
-    target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
-endif()
+conan_cmake_install(PATH_OR_REFERENCE .
+                    BUILD missing
+                    REMOTE conancenter
+                    SETTINGS ${settings})
+
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME ON)
+find_package(Boost COMPONENTS program_options log REQUIRED)
+
+include_directories("./include")
+
+file(GLOB SOURCES 
+    "./include/Utils.hpp"
+    "./include/DataEntry.hpp"
+    "./include/DataType.hpp"
+    "./include/DataTypesHolder.hpp"
+    "./include/EnumDataTypes.hpp"
+    "./include/Logger.hpp"
+    "./include/Packet.hpp"
+    "./include/Server.hpp"
+    "./include/ValueConverter.hpp"
+    "./src/Utils.cpp"
+    "./src/Client.cpp"
+    "./src/DataEntry.cpp"
+    "./src/DataType.cpp"
+    "./src/DataTypesHolder.cpp"
+    "./src/Logger.cpp"
+    "./src/Packet.cpp"
+    "./src/Server.cpp"
+    "./src/ValueConverter.cpp"
+    "./src/main.cpp"
+)
+
+add_executable(${PROJECT_NAME} ${SOURCES})
+IF(MSVC)
+    set_property(
+        TARGET 
+        ${PROJECT_NAME} 
+        PROPERTY 
+        MSVC_RUNTIME_LIBRARY 
+        "MultiThreaded$<$<CONFIG:>:>"
+    )
+ENDIF(MSVC)
+
+include_directories(${Boost_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} Boost::Boost)
