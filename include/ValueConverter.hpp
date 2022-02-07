@@ -1,6 +1,7 @@
 #ifndef VALUE_CONVERTER_H
 #define VALUE_CONVERTER_H
 
+#include <iterator>
 #include <vector>
 #include <cstdint>
 

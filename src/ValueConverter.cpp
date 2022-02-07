@@ -5,7 +5,7 @@
 bool ValueConverter::isEnoughToRead(packet_iterator_t &it, packet_iterator_t end, size_t size)
 {
     //std::cout << "start " << (uint64_t)it.base() << " size " << size << " end " << (uint64_t)end.base() << "\n";
-    return ((uint64_t)it.base() + size <= (uint64_t)end.base());
+    return (it + size <= end);
 }
 
 uint64_t ValueConverter::to_uint_value_from_vector(
@@ -16,7 +16,7 @@ uint64_t ValueConverter::to_uint_value_from_vector(
     uint64_t val = 0;
     if(ValueConverter::isEnoughToRead(it, end, amount))
     {
-        val = *(uint64_t*)it.base();
+        val = *(uint64_t*)&(*it);
         it += amount;
     }
     return val;

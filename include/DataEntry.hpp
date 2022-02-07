@@ -3,7 +3,7 @@
 
 #include "DataTypesHolder.hpp"
 #include <iostream>
-#include <stdint.h>
+#include <cstdlib>
 #include <vector>
 
 #include "ValueConverter.hpp"

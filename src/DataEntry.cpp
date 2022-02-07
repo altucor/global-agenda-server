@@ -1,9 +1,7 @@
 #include "DataEntry.hpp"
-
 #include "Utils.hpp"
 
 #include <algorithm>
-
 #include <boost/log/trivial.hpp>
 
 #define MAX_TEXT_SIZE 16

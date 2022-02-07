@@ -37,12 +37,7 @@ std::vector<uint8_t> Packet::build()
     }
 
     std::vector<uint8_t> outData;
-    DataEntry entriesCountObject = DataEntry(CMD_CODE::APPLICATION_VALUE, (uint16_t)m_entries.size());
-    std::vector<uint8_t> entriesCountPayload = entriesCountObject.build();
-    payload.insert(payload.begin(), entriesCountPayload.begin(), entriesCountPayload.end()); // append count of entries
     uint16_t payloadSize = payload.size();
-    //payload.insert(payload.begin(), payloadSize & 0xFF00); // append size of whole packet
-    //payload.insert(payload.begin(), payloadSize & 0x00FF); // append size of whole packet
     std::vector<uint8_t> payloadSizeBuilded = ValueConverter::from_uint16(payloadSize);
     payload.insert(payload.begin(), payloadSizeBuilded.begin(), payloadSizeBuilded.end());
     return payload;

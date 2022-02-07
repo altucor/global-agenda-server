@@ -1,7 +1,7 @@
 #ifndef ENUM_DATA_TYPES_H
 #define ENUM_DATA_TYPES_H
 
-#include <stdint.h>
+#include <cstdint>
 
 /*
 enum CMD_CODE : uint16_t 
@@ -662,7 +662,7 @@ enum CMD_CODE : uint16_t
     GROUP_TYPE_VALUE_ID = 0x280,
     GSC_PIPE_NAME = 0x281,
     HAIR_ASM_ID = 0x282,
-    HANDLE = 0x283,
+    CMD_HANDLE = 0x283,
     HARD_LOGIN_CAP = 0x284,
     HAS_PHYSICS_ASSET_INST_FLAG = 0x285,
     HEADQUARTER_FLAG = 0x286,
