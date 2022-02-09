@@ -32,11 +32,12 @@ std::vector<uint8_t> Packet::build()
     for(auto &entry : m_entries)
     {
         std::vector<uint8_t> entryData = entry.build();
-        entry.dbg_print();
+        //entry.dbg_print();
         payload.insert(std::end(payload), std::begin(entryData), std::end(entryData));
     }
-
-    std::vector<uint8_t> outData;
+    DataEntry entriesCountObject = DataEntry(CMD_CODE::APPLICATION_VALUE, (uint16_t)m_entries.size());
+    std::vector<uint8_t> entriesCountPayload = entriesCountObject.build();
+    payload.insert(payload.begin(), entriesCountPayload.begin(), entriesCountPayload.end()); // append count of entries
     uint16_t payloadSize = payload.size();
     std::vector<uint8_t> payloadSizeBuilded = ValueConverter::from_uint16(payloadSize);
     payload.insert(payload.begin(), payloadSizeBuilded.begin(), payloadSizeBuilded.end());
@@ -49,14 +50,11 @@ bool Packet::appendEntry(DataEntry &entry)
     return true;
 }
 
-bool Packet::appendEntry(DataEntry entry)
-{
-    m_entries.push_back(entry);
-    return true;
-}
-
 DataEntry Packet::getNextEntry()
 {
+    m_entryIter = std::next(m_entryIter, 1);
+    if(m_entryIter != m_entries.end())
+        return *m_entryIter;
     return DataEntry();
 }
 
@@ -89,28 +87,14 @@ void Packet::m_parse(std::vector<uint8_t>::iterator &start, std::vector<uint8_t>
             std::cout << "got invalid entry\n";
             return;
         }
-        dt_temp.dbg_print();
-        //std::cout << "iterator pos after entry: " << (uint64_t)it.base() << "\n";
-        //if(dt_temp.getCmd() == CMD_CODE::APPLICATION_VALUE)
-        //    std::cout << "APPLICATION_VALUE: " << dt_temp.get_uint16() << "\n";
-        //else if(dt_temp.getCmd() == CMD_CODE::VERSION)
-        //    std::cout << "VERSION: " << dt_temp.get_uint32() << "\n";
+        if(dt_temp.getCmd() == CMD_CODE::APPLICATION_VALUE)
+        {
+            m_entriesCount = dt_temp.get_uint16();
+        }
+        //dt_temp.dbg_print();
         m_entries.push_back(dt_temp);
     }
-
-    DataEntry entriesCount = getEntryByCmd(CMD_CODE::APPLICATION_VALUE);
-    if(entriesCount.valid())
-    {
-        m_entriesCount = entriesCount.get_uint16();
-    }
-    else
-    {
-        m_entriesCount = 1;
-    }
-
-    //std::cout << "packet size " << m_size << "\n";
-    //std::cout << "entries count " << m_entriesCount << "\n";
-    //std::cout << "arr entries size " << m_entries.size() << "\n";
+    m_entryIter = m_entries.begin();
 }
 
 void Packet::m_build()

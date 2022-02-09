@@ -10,6 +10,8 @@ ELSEIF(UNIX)
 ENDIF()
 
 set(REQUIRED_BOOST_VERSION 1.75.0)
+set(REQUIRED_MBEDTLS_VERSION 2.25.0)
+set(REQUIRED_OPENSSL_VERSION 1.1.1g)
 IF(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc /MT")
 ELSE()
@@ -39,7 +41,8 @@ endif()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-conan_cmake_configure(REQUIRES boost/${REQUIRED_BOOST_VERSION}
+conan_cmake_configure(REQUIRES 
+                      boost/${REQUIRED_BOOST_VERSION} 
                       GENERATORS cmake_find_package)
 
 conan_cmake_autodetect(settings)
@@ -52,7 +55,7 @@ conan_cmake_install(PATH_OR_REFERENCE .
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME ON)
-find_package(Boost COMPONENTS program_options log REQUIRED)
+find_package(Boost REQUIRED)
 
 include_directories("./include")
 

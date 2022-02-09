@@ -14,7 +14,6 @@ public:
     bool setPacket(std::vector<uint8_t> &input);
     std::vector<uint8_t> build();
     bool appendEntry(DataEntry &entry);
-    bool appendEntry(DataEntry entry);
     DataEntry getNextEntry();
     DataEntry getEntryByCmd(CMD_CODE cmd);
 private:
@@ -23,7 +22,8 @@ private:
 private:
     uint16_t m_size;
     std::vector<DataEntry> m_entries;
-    uint16_t m_entriesCount;
+    std::vector<DataEntry>::iterator m_entryIter;
+    uint16_t m_entriesCount = 0;
 };
 
 #endif // PACKET_H

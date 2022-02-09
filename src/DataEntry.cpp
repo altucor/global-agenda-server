@@ -191,6 +191,23 @@ uint64_t DataEntry::get_uint64()
     return ValueConverter::to_uint64(it, m_data.end());
 }
 
+std::vector<uint8_t> DataEntry::get_raw_data()
+{
+    return m_data;
+}
+
+std::string DataEntry::get_string()
+{
+    std::string str = "";
+    for(uint64_t i=0; i<m_data.size(); i++)
+    {
+        if(m_data[i] == 0x00)
+            continue;
+        str.append((char*)&m_data[i], 1);
+    }
+    return str;
+}
+
 bool DataEntry::valid()
 {
     if(m_cmd == (CMD_CODE)0)
@@ -203,10 +220,8 @@ bool DataEntry::valid()
 void DataEntry::dbg_print()
 {
     BOOST_LOG_TRIVIAL(info) << "--- DataEntry ---";
-    BOOST_LOG_TRIVIAL(info) << "DataEntry cmd " << m_cmd;
-    //Utils::printHexValue((uint16_t)m_cmd);
-    BOOST_LOG_TRIVIAL(info) << "Data: " << m_data.data();
-    //Utils::printHexBuffer(m_data);
+    BOOST_LOG_TRIVIAL(info) << "Cmd: 0x" << Utils:: Utils::valueToHex(m_cmd, 4);
+    BOOST_LOG_TRIVIAL(info) << "Data: " << Utils::toHexBuffer(m_data);
     BOOST_LOG_TRIVIAL(info) << "--- DataEntry END ---";
 }
 

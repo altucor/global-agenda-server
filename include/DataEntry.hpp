@@ -26,6 +26,8 @@ public:
     uint16_t get_uint16();
     uint32_t get_uint32();
     uint64_t get_uint64();
+    std::vector<uint8_t> get_raw_data();
+    std::string get_string();
     bool valid();
     void dbg_print();
 private:

@@ -1,10 +1,11 @@
 #include "Client.hpp"
-#include "Packet.hpp"
 #include "Logger.hpp"
+#include "Utils.hpp"
+
 
 #include <iostream>
 
-#define CLIENT_MAX_BUFFER 0x1000
+#define CLIENT_MAX_BUFFER 0x2000
 
 Client::Client(tcp::socket socket)
     : m_socket(std::move(socket))
@@ -18,7 +19,7 @@ void Client::start()
     m_read();
 }
 
-void get_session_guid(std::vector<uint8_t> &data)
+std::vector<uint8_t> get_session_guid()
 {
     std::vector<uint8_t> guidPayload{ 
         0x40, 0x41, 0x42, 0x43, 
@@ -27,9 +28,7 @@ void get_session_guid(std::vector<uint8_t> &data)
         0x52, 0x53, 0x54, 0x55
     };
 
-    Packet response;
-    response.appendEntry(DataEntry(CMD_CODE::SESSION_GUID, guidPayload));
-    data = response.build();
+    return guidPayload;
 }
 
 void get_finish_login(std::vector<uint8_t> &data)
@@ -75,6 +74,66 @@ void get_banned_until(std::vector<uint8_t> &data)
     data = response.build();
 }
 
+Packet Client::m_processPacket(Packet &packet)
+{
+    Packet responsePacket;
+    DataEntry entry = packet.getNextEntry();
+    while(entry.valid())
+    {
+
+        CMD_CODE cmd = entry.getCmd();
+        switch (cmd)
+        {
+            case CMD_CODE::APPLICATION_VALUE:
+                BOOST_LOG_TRIVIAL(info) << "Application value: " << entry.get_uint16();
+                break;
+            case CMD_CODE::VERSION:
+                BOOST_LOG_TRIVIAL(info) << "Version: " << entry.get_uint32();
+                responsePacket.appendEntry(entry);
+                responsePacket.appendEntry(DataEntry(CMD_CODE::SESSION_GUID, get_session_guid()));
+                break;
+            case CMD_CODE::SESSION_GUID:
+                BOOST_LOG_TRIVIAL(info) << "Session GUID: " << Utils::toHexBuffer(entry.get_raw_data());
+                break;
+            case CMD_CODE::USER_NAME:
+                BOOST_LOG_TRIVIAL(info) << "Username: " << entry.get_string();
+                break;
+            case CMD_CODE::BIN_BLOB:
+                {
+                    // here decrypt and show data
+                    std::vector<uint8_t> encryptedData = entry.get_raw_data();
+                    BOOST_LOG_TRIVIAL(info) << "BIN BLOB: " << Utils::toHexBuffer(entry.get_raw_data());
+                    break;
+                }
+            case CMD_CODE::SYS_SITE_ID:
+                BOOST_LOG_TRIVIAL(info) << "SYS_SITE_ID: " << Utils::valueToHex(entry.get_uint32(), sizeof(uint32_t));
+                break;
+            case CMD_CODE::STEAM_ID:
+                BOOST_LOG_TRIVIAL(info) << "STEAM_ID: " << Utils::valueToHex(entry.get_uint64(), sizeof(uint64_t));
+                break;
+            case CMD_CODE::PLAYER_ID:
+                BOOST_LOG_TRIVIAL(info) << "PLAYER_ID: " << Utils::valueToHex(entry.get_uint32(), sizeof(uint32_t));
+                break;
+            case CMD_CODE::NET_ACCESS_FLAGS:
+                BOOST_LOG_TRIVIAL(info) << "NET_ACCESS_FLAGS: " << Utils::valueToHex(entry.get_uint16(), sizeof(uint16_t));
+                break;
+            case CMD_CODE::DESTROYED_ASM_ID:
+                BOOST_LOG_TRIVIAL(info) << "DESTROYED_ASM_ID: " << Utils::valueToHex(entry.get_uint32(), sizeof(uint32_t));
+                break;
+            case CMD_CODE::DISPLAY_EULA_FLAG:
+                BOOST_LOG_TRIVIAL(info) << "DESTROYED_ASM_ID: " << Utils::valueToHex(entry.get_uint32(), sizeof(uint32_t));
+                break;
+            case CMD_CODE::PLAYER_NAME:
+                BOOST_LOG_TRIVIAL(info) << "DESTROYED_ASM_ID: " << Utils::valueToHex(entry.get_uint32(), sizeof(uint32_t));
+                break;
+            default:
+                break;
+        }
+        entry = packet.getNextEntry();
+    }
+    return responsePacket;
+}
+
 void Client::m_read()
 {
     //std::cout << "Client read called\n";
@@ -94,25 +153,18 @@ void Client::m_read()
             m_recv_buffer.resize(bytes_transfered);
             std::vector<uint8_t>::iterator start = m_recv_buffer.begin();
             std::vector<uint8_t>::iterator end = m_recv_buffer.end();
-            std::vector<uint8_t> response;
+            //std::vector<uint8_t> response;
+            Packet responsePacket;
             while(start != end)
             {
-                Packet packet(start, end);
                 BOOST_LOG_TRIVIAL(info) << "Packet processing finished";
                 BOOST_LOG_TRIVIAL(info) << "Buffer recv size: " << m_recv_buffer.size();
-                if(m_recv_buffer.size() == 12) // version packet
-                {
-                    BOOST_LOG_TRIVIAL(info) << "Responding on version data";
-                    get_session_guid(response);
-                }
-                //else if(m_recv_buffer.size() == 152) // first auth step
-                else
-                {
-                    BOOST_LOG_TRIVIAL(info) << "Responding on auth step data";
-                    //get_finish_login(response);
-                    get_banned_until(response);
-                }
-                m_write(response);
+                BOOST_LOG_TRIVIAL(info) << "Buffer recv data: " << Utils::toHexBuffer(m_recv_buffer);
+                Packet packet(start, end);
+                Packet responsePacket = m_processPacket(packet);
+                std::vector<uint8_t> to_send = responsePacket.build();
+                BOOST_LOG_TRIVIAL(info) << "Data to send: " << Utils::toHexBuffer(to_send);
+                m_write(to_send);
             }
         }
     );

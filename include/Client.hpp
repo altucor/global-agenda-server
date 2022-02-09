@@ -1,6 +1,8 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
+#include "Packet.hpp"
+
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -16,6 +18,7 @@ public:
     Client(tcp::socket socket);
     void start();
 private:
+    Packet m_processPacket(Packet &packet);
     void m_read();
     void m_write(const std::vector<uint8_t> &data);
 private:
