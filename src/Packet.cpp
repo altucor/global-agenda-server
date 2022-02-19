@@ -1,6 +1,16 @@
 #include "Packet.hpp"
 
+#include "Utils.hpp"
+
+#include <boost/log/trivial.hpp>
+
 Packet::Packet()
+{
+
+}
+
+Packet::Packet(const CMD_CODE cmd)
+    : m_packetHeader(cmd)
 {
 
 }
@@ -21,32 +31,29 @@ Packet::~Packet()
 
 }
 
-bool Packet::setPacket(std::vector<uint8_t> &input)
-{
-    return false;
-}
-
 std::vector<uint8_t> Packet::build()
 {
     std::vector<uint8_t> payload;
+    Utils::concatArrays(payload, m_packetHeader.build()); // append count of entries
     for(auto &entry : m_entries)
     {
         std::vector<uint8_t> entryData = entry.build();
         //entry.dbg_print();
-        payload.insert(std::end(payload), std::begin(entryData), std::end(entryData));
+        Utils::concatArrays(payload, entryData);
     }
-    DataEntry entriesCountObject = DataEntry(CMD_CODE::APPLICATION_VALUE, (uint16_t)m_entries.size());
-    std::vector<uint8_t> entriesCountPayload = entriesCountObject.build();
-    payload.insert(payload.begin(), entriesCountPayload.begin(), entriesCountPayload.end()); // append count of entries
-    uint16_t payloadSize = payload.size();
-    std::vector<uint8_t> payloadSizeBuilded = ValueConverter::from_uint16(payloadSize);
-    payload.insert(payload.begin(), payloadSizeBuilded.begin(), payloadSizeBuilded.end());
+
     return payload;
 }
 
 bool Packet::appendEntry(DataEntry &entry)
 {
     m_entries.push_back(entry);
+    return true;
+}
+
+bool Packet::appendDataSet(DataSet &dataSet)
+{
+    m_dataSets.push_back(dataSet);
     return true;
 }
 
@@ -70,31 +77,58 @@ DataEntry Packet::getEntryByCmd(CMD_CODE cmd)
 
 void Packet::m_parse(std::vector<uint8_t>::iterator &start, std::vector<uint8_t>::iterator end)
 {
-    m_size = ValueConverter::to_uint16(start, end);
-    if(m_size == 0)
-        return;
+    m_packetHeader = EntryHeader(start, end);
 
-    if(m_size > end - start)
-        return;
-
-    std::vector<uint8_t>::iterator packetEnd = start + m_size;
-
-    while(start != packetEnd)
+    for(uint64_t i=0; i<m_packetHeader.getSize(); i++)
     {
-        DataEntry dt_temp(start, packetEnd);
-        if(!dt_temp.valid())
+        if(start == end)
+            break;
+        EntryHeader entryHeader(start, end);
+        switch (entryHeader.getType())
         {
-            std::cout << "got invalid entry\n";
-            return;
+        case ENUM_TYPE::TYPE_TCP_DATA_SET:
+            {
+                DataSet ds_temp(entryHeader, start, end);
+                ds_temp.dbg_print();
+                m_dataSets.push_back(ds_temp);
+                break;
+            }
+        default:
+            {
+                DataEntry dt_temp(entryHeader, start, end);
+                dt_temp.dbg_print();
+                if(!dt_temp.valid())
+                {
+                    BOOST_LOG_TRIVIAL(info) << "Error got invalid entry";
+                    return;
+                }
+                m_entries.push_back(dt_temp);
+                break;
+            }
         }
-        if(dt_temp.getCmd() == CMD_CODE::APPLICATION_VALUE)
-        {
-            m_entriesCount = dt_temp.get_uint16();
-        }
-        //dt_temp.dbg_print();
-        m_entries.push_back(dt_temp);
     }
+
+    if(end != start)
+    {
+        BOOST_LOG_TRIVIAL(info) << "Error packet parse end != start";
+    }
+
     m_entryIter = m_entries.begin();
+}
+
+CMD_CODE Packet::getCmd()
+{
+    return m_packetHeader.getCmd();
+}
+
+uint64_t Packet::entriesCount()
+{
+    return m_entries.size();
+}
+
+bool Packet::isEmpty()
+{
+    return m_entries.size() == 0;
 }
 
 void Packet::m_build()

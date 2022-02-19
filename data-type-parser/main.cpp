@@ -8,6 +8,9 @@
 
 #define STRING_NAME_SIZE 96
 
+#define DATA_TCP_TYPES "TCP"
+#define DATA_UDP_TYPES "UDP"
+
 enum TYPE_SIZE_TCP
 {
 	TYPE_TCP_WCHAR_STR = 0,
@@ -23,7 +26,7 @@ enum TYPE_SIZE_TCP
 	TYPE_TCP_DYNAMIC_UINT32_SIZE = 10,
 };
 
-const std::vector<std::string> g_type_size_text = {
+const static std::vector<std::string> g_tcp_text_types = {
 	"TYPE_TCP_WCHAR_STR",
 	"TYPE_TCP_FLOAT",
 	"TYPE_TCP_DOUBLE_OR_INT_SIGNED",
@@ -52,11 +55,24 @@ std::string toHex(uint64_t val, size_t width)
 
 class TypeEntryTCP
 {
+/*
+00000000 flag_0x68_struct struc ; (sizeof=0x68, mappedto_252)
+00000000                                         ; XREF: global_flags/r
+00000000 flag_1          dw ?                    ; XREF: sub_10935250+36/r
+00000000                                         ; sub_10935250+9B/r
+00000002 flag_2          dw ?
+00000004 flag_3          dd ?                    ; XREF: CMarshalEntry__flag_version_conversion+31/r
+00000004                                         ; CMarshalEntry__get_uint16_t+6/r ...
+00000008 text_name       dw 48 dup(?)            ; XREF: sub_10935250+47/o
+00000008                                         ; sub_10935250+AC/o ... ; string(C (16 bits))
+00000068 flag_0x68_struct ends
+*/
 private:
 	uint64_t m_index = 0;
+	uint16_t m_flag1 = 0;
+	uint16_t m_flag2 = 0;
 	uint32_t m_type = 0;
 	std::string m_name = "";
-	uint32_t m_flags = 0;
 	std::string getStr(std::ifstream &binFile, const uint64_t count)
 	{
 		std::string str;
@@ -75,19 +91,53 @@ public:
 	explicit TypeEntryTCP(std::ifstream &binFile, const uint64_t index)
 	{
 		m_index = index;
+		binFile.read(reinterpret_cast<char*>(&m_flag1), sizeof(uint16_t));
+		binFile.read(reinterpret_cast<char*>(&m_flag2), sizeof(uint16_t));
 		binFile.read(reinterpret_cast<char*>(&m_type), sizeof(uint32_t));
 		m_name = getStr(binFile, STRING_NAME_SIZE);
-		binFile.read(reinterpret_cast<char*>(&m_flags), sizeof(uint32_t));
 	}
-	std::string getLine()
+	std::string getCsvLine()
 	{
 		std::stringstream ss;
 		ss << 
 		toHex(m_index, 4) <<
-		" Type: " << std::left << std::setw(3) << m_type << 
+		"," << toHex(m_flag1, 4) << 
+		"," << toHex(m_flag2, 4) <<
+		"," << m_type << 
+		"," << m_name << 
+		"," << g_tcp_text_types[m_type];
+		return ss.str();
+	}
+	std::string getLineTxt()
+	{
+		std::stringstream ss;
+		ss << 
+		toHex(m_index, 4) <<
+		" Flag1: " << std::left << std::setw(4) << m_flag1 << 
+		" Flag2: " << std::left << std::setw(4) << m_flag2 <<
+		" Type: " << std::left << std::setw(4) << m_type << 
 		" Name: " << std::left << std::setw(44) << m_name << 
-		" flags: " << toHex(m_flags, 4) <<
-		" " << g_type_size_text[m_type];
+		" " << g_tcp_text_types[m_type];
+		return ss.str();
+	}
+	std::string getEnumTypeFlagLine()
+	{
+		std::stringstream ss;
+		ss << 
+		"	{" << toHex(m_type, 2) << 
+		", " << toHex(m_flag1, 4) << "},";
+		return ss.str();
+	}
+	std::string getEnumLine()
+	{
+		std::stringstream ss;
+		ss << "	" << m_name << " = " << toHex(m_index, 4) << ",";
+		return ss.str();
+	}
+	std::string getEnumTextLine()
+	{
+		std::stringstream ss;
+		ss << "	\"" << m_name << "\",";
 		return ss.str();
 	}
 };
@@ -131,8 +181,96 @@ public:
 	}
 };
 
-#define DATA_TCP_TYPES "TCP"
-#define DATA_UDP_TYPES "UDP"
+std::string generateEnum()
+{
+	std::stringstream ss;
+	ss << "enum ENUM_TYPE : uint32_t\n{\n";
+	for(uint64_t i=0; i<g_tcp_text_types.size(); i++)
+	{
+		ss << "	" << g_tcp_text_types[i] << " = " << i << ",\n";
+	}
+	ss << "};\n\n";
+	return ss.str();
+
+}
+
+void generateTcpHeaderFile(std::ifstream &binFile)
+{
+	std::string structDefinition = "typedef struct enum_type_flags\n{\n	uint32_t type = 0;\n	uint32_t flags = 0;\n} enum_type_flags_t;\n\n";
+
+	std::string enumValue = "enum CMD_CODE : uint16_t \n{\n";
+	std::string enumTypeFlag = structDefinition + "const static enum_type_flags_t g_cmd_code_types_flags[] =\n{\n";
+	std::string enumText = "const static std::vector<std::string> g_cmd_code_text \n{\n";
+
+	std::ofstream outFile("EnumDataTypes.hpp");
+	std::string headerName = "ENUM_DATA_TYPES_HPP";
+	std::stringstream headerFileContent;
+	outFile << 
+	"#ifndef " << headerName << "\n" <<
+	"#define "  << headerName << "\n\n" << 
+	"#include <cstdint>\n\n";
+
+	uint64_t counter = 0;
+	while(!binFile.eof())
+	{
+		TypeEntryTCP entry(binFile, counter);
+		enumValue += entry.getEnumLine() + "\n";
+		enumTypeFlag += entry.getEnumTypeFlagLine() + "\n";
+		enumText += entry.getEnumTextLine() + "\n";
+		counter++;
+	}
+
+	enumValue += "};";
+	enumTypeFlag += "};";
+	enumText += "};";
+
+	outFile << generateEnum();
+	outFile << enumValue << "\n\n";
+	outFile << enumTypeFlag << "\n\n";
+	outFile << enumText << "\n\n";
+	outFile << "#endif // " << headerName << "\n";
+}
+
+void generateTcpCsv(std::ifstream &binFile)
+{
+	uint64_t counter = 0;
+	while(!binFile.eof())
+	{
+		TypeEntryTCP entry(binFile, counter);
+		std::cout << entry.getCsvLine() << std::endl;
+		counter++;
+	}
+}
+
+void generateTcpReadable(std::ifstream &binFile)
+{
+	uint64_t counter = 0;
+	while(!binFile.eof())
+	{
+		TypeEntryTCP entry(binFile, counter);
+		std::cout << entry.getLineTxt() << std::endl;
+		counter++;
+	}
+}
+
+void generateUdpReadable(std::ifstream &binFile)
+{
+	uint64_t counter = 0;
+	while(!binFile.eof())
+	{
+		TypeEntryUDP entry(binFile, counter);
+		std::cout << entry.getLine() << std::endl;
+		counter++;
+	}
+}
+
+const static std::string g_parser_commands[] = 
+{
+	"generate-tcp-header",
+	"generate-tcp-csv",
+	"generate-tcp-readable",
+	"generate-udp-readable"
+};
 
 int main(int argc, char *argv[])
 {
@@ -142,7 +280,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	std::string type(argv[1]);
+	std::string userCmd(argv[1]);
 	std::string filePath(argv[2]);
 
 	std::ifstream binFile(filePath, std::ios::binary);
@@ -152,20 +290,21 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	uint64_t counter = 0;
-	while(!binFile.eof())
+	if(userCmd == g_parser_commands[0])
 	{
-		if(type == DATA_TCP_TYPES)
-		{
-			TypeEntryTCP entry(binFile, counter);
-			std::cout << entry.getLine() << std::endl;
-		}
-		else if(type == DATA_UDP_TYPES)
-		{
-			TypeEntryUDP entry(binFile, counter);
-			std::cout << entry.getLine() << std::endl;
-		}
-		counter++;
+		generateTcpHeaderFile(binFile);
+	}
+	else if(userCmd == g_parser_commands[1])
+	{
+		generateTcpCsv(binFile);
+	}
+	else if(userCmd == g_parser_commands[2])
+	{
+		generateTcpReadable(binFile);
+	}
+	else if(userCmd == g_parser_commands[3])
+	{
+		generateUdpReadable(binFile);
 	}
 
 	return 0;

@@ -57,3 +57,8 @@ void Utils::printHexValue(uint64_t val)
 {
     Utils::printHex(val, sizeof(val));
 }
+
+void Utils::concatArrays(std::vector<uint8_t> &dst, std::vector<uint8_t> &src)
+{
+    dst.insert(dst.end(), src.begin(), src.end());
+}

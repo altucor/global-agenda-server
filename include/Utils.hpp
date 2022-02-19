@@ -15,6 +15,7 @@ public:
     static void printHexValue(uint16_t val);
     static void printHexValue(uint32_t val);
     static void printHexValue(uint64_t val);
+    static void concatArrays(std::vector<uint8_t> &dst, std::vector<uint8_t> &src);
 };
 
 #endif // UTILS_H

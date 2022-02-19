@@ -2,7 +2,7 @@
 #include "Logger.hpp"
 #include "Utils.hpp"
 
-
+#include <boost/log/trivial.hpp>
 #include <iostream>
 
 #define CLIENT_MAX_BUFFER 0x2000
@@ -19,7 +19,7 @@ void Client::start()
     m_read();
 }
 
-std::vector<uint8_t> get_session_guid()
+std::vector<uint8_t> get_session_guid_client()
 {
     std::vector<uint8_t> guidPayload{ 
         0x40, 0x41, 0x42, 0x43, 
@@ -61,6 +61,67 @@ void get_finish_login(std::vector<uint8_t> &data)
     data = response.build();
 }
 
+Packet server_response_version()
+{
+    Packet packetOut(CMD_CODE::APPLICATION_VALUE);
+    packetOut.appendEntry(DataEntry(CMD_CODE::VERSION, {0x01, 0x00, 0x05, 0x01}));
+    packetOut.appendEntry(DataEntry(CMD_CODE::SESSION_GUID, get_session_guid_client()));
+    return packetOut;
+}
+
+void server_response_apply_on_interval_flag()
+{
+
+}
+
+void server_response_apply_on_interval_flag(Packet &intervalData)
+{
+    TcpPacket tcpPacket;
+    //Packet intervalData(CMD_CODE::APPLY_ON_INTERVAL_FLAG);
+    intervalData.appendEntry(DataEntry(CMD_CODE::PLAYER_ID, (uint32_t)0x001736D5));
+    intervalData.appendEntry(DataEntry(CMD_CODE::NET_ACCESS_FLAGS, (uint64_t)0x01FFF3F8));
+    intervalData.appendEntry(DataEntry(CMD_CODE::DISPLAY_EULA_FLAG, "n"));
+    intervalData.appendEntry(DataEntry(CMD_CODE::PLAYER_NAME, "PlayerNameLol"));
+    intervalData.appendEntry(DataEntry(CMD_CODE::SUCCESS, (bool)true));
+    intervalData.appendEntry(DataEntry(CMD_CODE::MSG_ID, (uint32_t)0x00004949));
+    intervalData.appendEntry(DataEntry(CMD_CODE::BANNED_UNTIL_DATETIME, (uint64_t)0x0000000000000000));
+    intervalData.appendEntry(DataEntry(CMD_CODE::SESSION_GUID, get_session_guid_client()));
+    intervalData.appendEntry(DataEntry(CMD_CODE::CONNECTION_HANDLE, (uint32_t)0x00001180));
+    intervalData.appendEntry(DataEntry(CMD_CODE::GAME_BITS, (uint32_t)0x0000000F));
+    intervalData.appendEntry(DataEntry(CMD_CODE::AFK_TIMEOUT_SEC, (uint32_t)0x000000384));
+    intervalData.appendEntry(DataEntry(CMD_CODE::TEXT_VALUE, "f5"));
+    //tcpPacket.appendPacket(intervalData);
+
+    AnonymousArray dataSet1(
+        DataEntry(CMD_CODE::SYS_SITE_ID, (uint32_t)0x00000001),
+        DataEntry(CMD_CODE::NAME_MSG_ID, (uint32_t)0x0000A26F)
+    );
+    AnonymousArray dataSet2(
+        DataEntry(CMD_CODE::SYS_SITE_ID, (uint32_t)0x00000002),
+        DataEntry(CMD_CODE::NAME_MSG_ID, (uint32_t)0x0000A2B0)
+    );
+    AnonymousArray dataSet3(
+        DataEntry(CMD_CODE::SYS_SITE_ID, (uint32_t)0x00000004),
+        DataEntry(CMD_CODE::NAME_MSG_ID, (uint32_t)0x0000CFAC)
+    );
+
+    intervalData.appendEntry(DataEntry(CMD_CODE::DATA_SET, "f5"));
+
+    Packet dataSet(CMD_CODE::DATA_SET);
+    dataSet.appendEntry(DataEntry(CMD_CODE::TEXT_VALUE, false));
+    
+    DataEntry(CMD_CODE::SYS_SITE_ID, false);
+    DataEntry(CMD_CODE::NAME_MSG_ID, false);
+    
+    tcpPacket.appendPacket(dataSet);
+
+    Packet dataSetMapConfigs(CMD_CODE::DATA_SET_MAP_CONFIGS);
+    dataSetMapConfigs.appendEntry(DataEntry(CMD_CODE::TEXT_VALUE, false));
+    tcpPacket.appendPacket(dataSetMapConfigs);
+
+    //return tcpPacket;
+}
+
 void get_banned_until(std::vector<uint8_t> &data)
 {
     Packet response;
@@ -74,64 +135,51 @@ void get_banned_until(std::vector<uint8_t> &data)
     data = response.build();
 }
 
+
 Packet Client::m_processPacket(Packet &packet)
 {
-    Packet responsePacket;
-    DataEntry entry = packet.getNextEntry();
-    while(entry.valid())
+    Packet response;
+    switch (packet.getCmd())
     {
-
-        CMD_CODE cmd = entry.getCmd();
-        switch (cmd)
+    case BUFF_COUNT:
+        break;
+    case APPLICATION_VALUE:
         {
-            case CMD_CODE::APPLICATION_VALUE:
-                BOOST_LOG_TRIVIAL(info) << "Application value: " << entry.get_uint16();
-                break;
-            case CMD_CODE::VERSION:
-                BOOST_LOG_TRIVIAL(info) << "Version: " << entry.get_uint32();
-                responsePacket.appendEntry(entry);
-                responsePacket.appendEntry(DataEntry(CMD_CODE::SESSION_GUID, get_session_guid()));
-                break;
-            case CMD_CODE::SESSION_GUID:
-                BOOST_LOG_TRIVIAL(info) << "Session GUID: " << Utils::toHexBuffer(entry.get_raw_data());
-                break;
-            case CMD_CODE::USER_NAME:
-                BOOST_LOG_TRIVIAL(info) << "Username: " << entry.get_string();
-                break;
-            case CMD_CODE::BIN_BLOB:
-                {
-                    // here decrypt and show data
-                    std::vector<uint8_t> encryptedData = entry.get_raw_data();
-                    BOOST_LOG_TRIVIAL(info) << "BIN BLOB: " << Utils::toHexBuffer(entry.get_raw_data());
-                    break;
-                }
-            case CMD_CODE::SYS_SITE_ID:
-                BOOST_LOG_TRIVIAL(info) << "SYS_SITE_ID: " << Utils::valueToHex(entry.get_uint32(), sizeof(uint32_t));
-                break;
-            case CMD_CODE::STEAM_ID:
-                BOOST_LOG_TRIVIAL(info) << "STEAM_ID: " << Utils::valueToHex(entry.get_uint64(), sizeof(uint64_t));
-                break;
-            case CMD_CODE::PLAYER_ID:
-                BOOST_LOG_TRIVIAL(info) << "PLAYER_ID: " << Utils::valueToHex(entry.get_uint32(), sizeof(uint32_t));
-                break;
-            case CMD_CODE::NET_ACCESS_FLAGS:
-                BOOST_LOG_TRIVIAL(info) << "NET_ACCESS_FLAGS: " << Utils::valueToHex(entry.get_uint16(), sizeof(uint16_t));
-                break;
-            case CMD_CODE::DESTROYED_ASM_ID:
-                BOOST_LOG_TRIVIAL(info) << "DESTROYED_ASM_ID: " << Utils::valueToHex(entry.get_uint32(), sizeof(uint32_t));
-                break;
-            case CMD_CODE::DISPLAY_EULA_FLAG:
-                BOOST_LOG_TRIVIAL(info) << "DESTROYED_ASM_ID: " << Utils::valueToHex(entry.get_uint32(), sizeof(uint32_t));
-                break;
-            case CMD_CODE::PLAYER_NAME:
-                BOOST_LOG_TRIVIAL(info) << "DESTROYED_ASM_ID: " << Utils::valueToHex(entry.get_uint32(), sizeof(uint32_t));
-                break;
-            default:
-                break;
+            if(packet.entriesCount() == 2)
+            {
+                return server_response_version();
+            }
+            else if(packet.entriesCount() == 6)
+            {
+                //return 
+            }
+            break;
         }
-        entry = packet.getNextEntry();
+    case APPLY_ON_INTERVAL_FLAG:
+        break;
+    case DATA_SET:
+        break;
+    case DATA_SET_MAP_CONFIGS:
+        break;
+    default:
+        break;
     }
-    return responsePacket;
+    return response;
+}
+
+TcpPacket Client::m_processTcpPacket(TcpPacket &tcpPack)
+{
+    TcpPacket response;
+    while(1)
+    {
+        Packet packetIn = tcpPack.getNextPacket();
+        if(packetIn.isEmpty())
+            break;
+        Packet packetOut = m_processPacket(packetIn);
+        if(!packetOut.isEmpty())
+            response.appendPacket(packetOut);
+    }
+    return response;
 }
 
 void Client::m_read()
@@ -154,14 +202,14 @@ void Client::m_read()
             std::vector<uint8_t>::iterator start = m_recv_buffer.begin();
             std::vector<uint8_t>::iterator end = m_recv_buffer.end();
             //std::vector<uint8_t> response;
-            Packet responsePacket;
+            TcpPacket responsePacket;
             while(start != end)
             {
                 BOOST_LOG_TRIVIAL(info) << "Packet processing finished";
                 BOOST_LOG_TRIVIAL(info) << "Buffer recv size: " << m_recv_buffer.size();
                 BOOST_LOG_TRIVIAL(info) << "Buffer recv data: " << Utils::toHexBuffer(m_recv_buffer);
-                Packet packet(start, end);
-                Packet responsePacket = m_processPacket(packet);
+                //TcpPacket packet(start, end);
+                //TcpPacket responsePacket = m_processPacket(packet);
                 std::vector<uint8_t> to_send = responsePacket.build();
                 BOOST_LOG_TRIVIAL(info) << "Data to send: " << Utils::toHexBuffer(to_send);
                 m_write(to_send);

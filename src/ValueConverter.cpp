@@ -22,6 +22,11 @@ uint64_t ValueConverter::to_uint_value_from_vector(
     return val;
 }
 
+CMD_CODE ValueConverter::to_cmd(packet_iterator_t &it, packet_iterator_t end)
+{
+    return (CMD_CODE)to_uint16(it, end);
+}
+
 uint8_t ValueConverter::to_uint8(packet_iterator_t &it, packet_iterator_t end)
 {
     return to_uint_value_from_vector(it, end, sizeof(uint8_t));

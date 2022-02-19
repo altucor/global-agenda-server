@@ -2,9 +2,6 @@
 #define ENUM_DATA_TYPES_HPP
 
 #include <cstdint>
-#include <vector>
-
-#define GUID_SIZE 16
 
 enum ENUM_TYPE : uint32_t
 {
@@ -19,21 +16,6 @@ enum ENUM_TYPE : uint32_t
 	TYPE_TCP_UINT64 = 8,
 	TYPE_TCP_UUID_16_BYTES = 9,
 	TYPE_TCP_DYNAMIC_UINT32_SIZE = 10,
-};
-
-const static std::vector<uint64_t> g_type_sizes =
-{
-    sizeof(uint16_t),
-    sizeof(uint32_t),
-    sizeof(uint32_t),
-    sizeof(uint32_t),
-    sizeof(uint16_t),
-    sizeof(uint8_t),
-    sizeof(uint16_t),
-    sizeof(uint64_t),
-    sizeof(uint64_t),
-    GUID_SIZE,
-    sizeof(uint32_t),
 };
 
 enum CMD_CODE : uint16_t 
@@ -681,7 +663,7 @@ enum CMD_CODE : uint16_t
 	GROUP_TYPE_VALUE_ID = 0x0280,
 	GSC_PIPE_NAME = 0x0281,
 	HAIR_ASM_ID = 0x0282,
-	HANDLE_TYPE = 0x0283,
+	HANDLE = 0x0283,
 	HARD_LOGIN_CAP = 0x0284,
 	HAS_PHYSICS_ASSET_INST_FLAG = 0x0285,
 	HEADQUARTER_FLAG = 0x0286,
@@ -1593,6 +1575,7 @@ enum CMD_CODE : uint16_t
 	CONTAINER_ITEM_TYPE = 0x0610,
 	CONTAINER_ITEM_ID = 0x0611,
 	PROMOTION_NAME = 0x0612,
+	 = 0x0613,
 };
 
 typedef struct enum_type_flags
@@ -3158,6 +3141,7 @@ const static enum_type_flags_t g_cmd_code_types_flags[] =
 	{0x03, 0x0564},
 	{0x03, 0x0565},
 	{0x00, 0x0566},
+	{0x00, 0x0000},
 };
 
 const static std::vector<std::string> g_cmd_code_text 
@@ -3805,7 +3789,7 @@ const static std::vector<std::string> g_cmd_code_text
 	"GROUP_TYPE_VALUE_ID",
 	"GSC_PIPE_NAME",
 	"HAIR_ASM_ID",
-	"HANDLE_TYPE",
+	"HANDLE",
 	"HARD_LOGIN_CAP",
 	"HAS_PHYSICS_ASSET_INST_FLAG",
 	"HEADQUARTER_FLAG",
@@ -4717,6 +4701,7 @@ const static std::vector<std::string> g_cmd_code_text
 	"CONTAINER_ITEM_TYPE",
 	"CONTAINER_ITEM_ID",
 	"PROMOTION_NAME",
+	"",
 };
 
 #endif // ENUM_DATA_TYPES_HPP

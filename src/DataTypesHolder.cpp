@@ -1,5 +1,4 @@
 #include "DataTypesHolder.hpp"
-
 #include "Utils.hpp"
 
 #include <boost/log/trivial.hpp>
@@ -26,8 +25,7 @@ DataTypesHolder::DataTypesHolder()
     append(CMD_CODE::NET_ACCESS_FLAGS,          DataType(CMD_TYPE::STATIC,  sizeof(uint16_t)));
     append(CMD_CODE::DESTROYED_ASM_ID,          DataType(CMD_TYPE::STATIC,  sizeof(uint32_t)));
     append(CMD_CODE::DISPLAY_EULA_FLAG,         DataType(CMD_TYPE::DYNAMIC, sizeof(uint16_t)));
-
-    
+    append(CMD_CODE::DATA_SET,                  DataType(CMD_TYPE::DYNAMIC, sizeof(uint16_t)));
 }
 
 DataTypesHolder::~DataTypesHolder()

@@ -1,10 +1,13 @@
 #ifndef VALUE_CONVERTER_H
 #define VALUE_CONVERTER_H
 
+#include "EnumDataTypes.hpp"
+
 #include <iterator>
 #include <vector>
 #include <cstdint>
 
+typedef std::vector<uint8_t> packet_t;
 typedef std::vector<uint8_t>::iterator packet_iterator_t;
 
 class ValueConverter
@@ -14,6 +17,7 @@ public:
     static uint64_t to_uint_value_from_vector(packet_iterator_t &it, 
         packet_iterator_t end,
         size_t amount);
+    static CMD_CODE to_cmd(packet_iterator_t &it, packet_iterator_t end);
     static uint8_t to_uint8(packet_iterator_t &it, packet_iterator_t end);
     static uint16_t to_uint16(packet_iterator_t &it, packet_iterator_t end);
     static uint32_t to_uint32(packet_iterator_t &it, packet_iterator_t end);

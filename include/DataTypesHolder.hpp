@@ -1,5 +1,5 @@
-#ifndef DATA_TYPES_HOLDER_H
-#define DATA_TYPES_HOLDER_H
+#ifndef DATA_TYPES_HOLDER_HPP
+#define DATA_TYPES_HOLDER_HPP
 
 #include "DataType.hpp"
 #include <map>
@@ -25,4 +25,4 @@ private:
     std::map<CMD_CODE, DataType> m_types;
 };
 
-#endif // DATA_TYPES_HOLDER_H
+#endif // DATA_TYPES_HOLDER_HPP

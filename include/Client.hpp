@@ -2,6 +2,8 @@
 #define CLIENT_HPP
 
 #include "Packet.hpp"
+#include "TcpPacket.hpp"
+#include "AnonymousArray.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -19,6 +21,7 @@ public:
     void start();
 private:
     Packet m_processPacket(Packet &packet);
+    TcpPacket Client::m_processTcpPacket(TcpPacket &tcpPack);
     void m_read();
     void m_write(const std::vector<uint8_t> &data);
 private:

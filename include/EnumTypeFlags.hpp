@@ -1,0 +1,4 @@
+#ifndef ENUM_TYPE_FLAGS_HPP
+#define ENUM_TYPE_FLAGS_HPP
+
+#endif // ENUM_TYPE_FLAGS_HPP
