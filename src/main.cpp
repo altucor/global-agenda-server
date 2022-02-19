@@ -6,8 +6,10 @@
 
 //#include <cstdlib>
 
+#include "Utils.hpp"
 #include "Packet.hpp"
 #include "TcpPacket.hpp"
+#include "Server.hpp"
 
 #include <iostream>
 #include <vector>
@@ -19,7 +21,7 @@
 #include <boost/bind.hpp>
 #include <boost/log/trivial.hpp>
 
-#include "Server.hpp"
+
 
 #define TCP_MAIN_PORT 9000
 
@@ -104,7 +106,7 @@ void testNestedDataSetBuilding()
             ),
             AnonymousArray(
                 DataEntry(CMD_CODE::SYS_SITE_ID, (uint32_t)0x00000002),
-                DataEntry(CMD_CODE::NAME_MSG_ID, (uint32_t)0x0000A2B0)
+                DataEntry(CMD_CODE::NAME_MSG_ID, (uint32_t)0x0000A20B)
             ),
             AnonymousArray(
                 DataEntry(CMD_CODE::SYS_SITE_ID, (uint32_t)0x00000004),
@@ -241,7 +243,10 @@ void testNestedDataSetBuilding()
     packet.appendDataSet(mapConfig);
 
 
-    std::vector<uint8_t> tcpData = TcpPacket(packet.build()).build();
+    TcpPacket tcpPacket;
+    tcpPacket.appendPacket(packet);
+    std::vector<uint8_t> tcpData = tcpPacket.build();
+    Utils::printHexBuffer(tcpData);
 }
 
 int main(int argc, char* argv[])

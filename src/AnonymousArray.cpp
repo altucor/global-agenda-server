@@ -1,5 +1,7 @@
 #include "AnonymousArray.hpp"
 
+#include "Utils.hpp"
+
 #include <boost/log/trivial.hpp>
 
 AnonymousArray::AnonymousArray(/* args */)
@@ -47,12 +49,10 @@ bool AnonymousArray::appendEntry(DataEntry &entry)
 std::vector<uint8_t> AnonymousArray::build()
 {
     std::vector<uint8_t> payload;
-    std::vector<uint8_t> arraySize = ValueConverter::from_uint16(m_entries.size());
-    payload.insert(payload.begin(), arraySize.begin(), arraySize.end());
+    Utils::concatArrays(payload, ValueConverter::from_uint16(m_entries.size()));
     for(auto &entry : m_entries)
     {
-        std::vector<uint8_t> entryData = entry.build();
-        payload.insert(std::end(payload), std::begin(entryData), std::end(entryData));
+        Utils::concatArrays(payload, entry.build());
     }
     return payload;
 }

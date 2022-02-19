@@ -22,6 +22,7 @@ public:
     DataEntry(const CMD_CODE cmd, const bool value);
     DataEntry(const CMD_CODE cmd, const double value);
     DataEntry(const CMD_CODE cmd, const std::string &value);
+    DataEntry(const CMD_CODE cmd, const char *value);
     DataEntry(const CMD_CODE cmd, const uint16_t port, const uint32_t ip);
     ~DataEntry();
     CMD_CODE getCmd();

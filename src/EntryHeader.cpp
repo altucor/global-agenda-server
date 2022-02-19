@@ -13,15 +13,18 @@ EntryHeader::~EntryHeader()
 {
 }
 
-EntryHeader::EntryHeader(packet_iterator_t &it, packet_iterator_t end)
+static void getConfig(
+    const CMD_CODE cmd, 
+    uint64_t *sizeWidth, 
+    uint64_t *contentSize
+)
 {
-    m_cmd = ValueConverter::to_cmd(it, end);
-    m_sizeWidth = 0;
-    switch(g_cmd_code_types_flags[m_cmd].type)
+    *sizeWidth = 0;
+    *contentSize = 0;
+    switch(g_cmd_code_types_flags[cmd].type)
     {
     case TYPE_TCP_WCHAR_STR:
-        m_contentSize = ValueConverter::to_uint16(it, end);
-        m_sizeWidth = sizeof(uint16_t);
+        *sizeWidth = sizeof(uint16_t);
         break;
     case TYPE_TCP_FLOAT:
     case TYPE_TCP_DOUBLE_OR_INT_SIGNED:
@@ -31,15 +34,13 @@ EntryHeader::EntryHeader(packet_iterator_t &it, packet_iterator_t end)
     case TYPE_TCP_UINT64:
     case TYPE_TCP_DATETIME:
     case TYPE_TCP_UUID_16_BYTES:
-        m_contentSize = g_type_sizes[g_cmd_code_types_flags[m_cmd].type];
+        *contentSize = g_type_sizes[g_cmd_code_types_flags[cmd].type];
         break;
     case TYPE_TCP_DYNAMIC_UINT32_SIZE:
-        m_contentSize = ValueConverter::to_uint32(it, end);
-        m_sizeWidth = sizeof(uint16_t);
+        *sizeWidth = sizeof(uint16_t);
         break;
     case TYPE_TCP_DATA_SET:
-        m_contentSize = ValueConverter::to_uint16(it, end);
-        m_sizeWidth = sizeof(uint16_t);
+        *sizeWidth = sizeof(uint16_t);
         break;
     default:
         throw std::exception("Got unknown enum type for parsing entry");
@@ -47,45 +48,37 @@ EntryHeader::EntryHeader(packet_iterator_t &it, packet_iterator_t end)
     }
 }
 
+EntryHeader::EntryHeader(packet_iterator_t &it, packet_iterator_t end)
+{
+    m_cmd = ValueConverter::to_cmd(it, end);
+    m_sizeWidth = 0;
+    getConfig(m_cmd, &m_sizeWidth, &m_contentSize);
+    switch (m_sizeWidth)
+    {
+    case sizeof(uint16_t):
+        m_contentSize = ValueConverter::to_uint16(it, end);
+        break;
+    case sizeof(uint32_t):
+        m_contentSize = ValueConverter::to_uint32(it, end);
+        break;
+    default:
+        break;
+    }
+}
+
+/*
 EntryHeader::EntryHeader(const CMD_CODE cmd)
 {
-
+    m_cmd = cmd;
 }
+*/
 
 EntryHeader::EntryHeader(const CMD_CODE cmd, const uint64_t size)
 {
     m_cmd = cmd;
     m_contentSize = size;
     m_sizeWidth = 0;
-    switch(g_cmd_code_types_flags[m_cmd].type)
-    {
-    case TYPE_TCP_WCHAR_STR:
-        {
-            m_sizeWidth = sizeof(uint16_t);
-            break;
-        }
-    case TYPE_TCP_FLOAT:
-    case TYPE_TCP_DOUBLE_OR_INT_SIGNED:
-    case TYPE_TCP_UINT32:
-    case TYPE_TCP_UINT16:
-    case TYPE_TCP_UINT8:
-    case TYPE_TCP_DATETIME:
-    case TYPE_TCP_UINT64:
-    case TYPE_TCP_UUID_16_BYTES:
-        m_sizeWidth = 0;
-        break;
-    case TYPE_TCP_DATA_SET:
-        m_sizeWidth = sizeof(uint16_t);
-        break;
-    case TYPE_TCP_DYNAMIC_UINT32_SIZE:
-        {
-            m_sizeWidth = sizeof(uint32_t);
-            break;
-        }
-    default:
-        throw std::exception("Got unknown enum type for parsing entry");
-        break;
-    }
+    getConfig(m_cmd, &m_sizeWidth, &m_contentSize);
 }
 
 uint64_t EntryHeader::getSize()

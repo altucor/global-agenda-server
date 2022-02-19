@@ -1,5 +1,7 @@
 #include "DataSet.hpp"
 
+#include "Utils.hpp"
+
 DataSet::DataSet(/* args */)
 {
 }
@@ -30,8 +32,20 @@ DataSet::DataSet(EntryHeader entryHeader, packet_iterator_t &it, packet_iterator
 
 DataSet::DataSet(const CMD_CODE cmd, std::vector<AnonymousArray> anonArrays)
 {
-    m_entryHeader = EntryHeader(cmd);
+    m_entryHeader = EntryHeader(cmd, 0);
     m_anonArrays = anonArrays;
+}
+
+packet_t DataSet::build()
+{
+    packet_t payload;
+    m_entryHeader.sanitizePayloadSizeByType(m_anonArrays);
+    Utils::concatArrays(payload, m_entryHeader.build());
+    for(auto &arr : m_anonArrays)
+    {
+        Utils::concatArrays(payload, arr.build());
+    }
+    return payload;
 }
 
 void DataSet::dbg_print()

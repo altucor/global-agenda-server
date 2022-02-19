@@ -52,50 +52,57 @@ DataEntry::DataEntry(std::vector<uint8_t> &data)
 }
 
 DataEntry::DataEntry(const CMD_CODE cmd, std::vector<uint8_t> &data)
-    : m_entryHeader(cmd), m_data(data)
+    : m_entryHeader(cmd, 0), m_data(data)
 {
     
 }
 
 
 DataEntry::DataEntry(const CMD_CODE cmd, uint16_t value)
-    : m_entryHeader(cmd)
+    : m_entryHeader(cmd, 0)
 {
     m_data = ValueConverter::from_uint16(value);
 }
 
 DataEntry::DataEntry(const CMD_CODE cmd, uint32_t value)
-    : m_entryHeader(cmd)
+    : m_entryHeader(cmd, 0)
 {
     m_data = ValueConverter::from_uint32(value);
 }
 
 DataEntry::DataEntry(const CMD_CODE cmd, uint64_t value)
-    : m_entryHeader(cmd)
+    : m_entryHeader(cmd, 0)
 {
     m_data = ValueConverter::from_uint64(value);
 }
 
 DataEntry::DataEntry(const CMD_CODE cmd, bool value)
-    : m_entryHeader(cmd)
+    : m_entryHeader(cmd, 0)
 {
     m_data = ValueConverter::from_bool(value);
 }
 
 DataEntry::DataEntry(const CMD_CODE cmd, double value)
-    : m_entryHeader(cmd)
+    : m_entryHeader(cmd, 0)
 {
     m_data = ValueConverter::from_double(value);
 }
 
 DataEntry::DataEntry(const CMD_CODE cmd, const std::string &value)
-    : m_entryHeader(cmd)
+    : m_entryHeader(cmd, 0)
 {
     std::copy(value.begin(), value.end(), std::back_inserter(m_data));
 }
 
+DataEntry::DataEntry(const CMD_CODE cmd, const char *value)
+    : m_entryHeader(cmd, 0)
+{
+    std::string temp(value);
+    std::copy(temp.begin(), temp.end(), std::back_inserter(m_data));
+}
+
 DataEntry::DataEntry(const CMD_CODE cmd, const uint16_t port, const uint32_t ip)
-    : m_entryHeader(cmd)
+    : m_entryHeader(cmd, 0)
 {
     m_data = ValueConverter::from_uint16(0x0002);
     m_data = ValueConverter::from_uint16(port);
@@ -117,46 +124,9 @@ CMD_CODE DataEntry::getCmd()
 std::vector<uint8_t> DataEntry::build()
 {
     std::vector<uint8_t> payload;
+    m_entryHeader.sanitizePayloadSizeByType(m_data);
     Utils::concatArrays(payload, m_entryHeader.build());
-    //packet_t cmdEncoded = ValueConverter::from_uint16(m_cmd);
-    //payload.insert(payload.end(), cmdEncoded.begin(), cmdEncoded.end());
-
-    uint64_t expectedDataSize = 0;
-    /*
-    switch(g_cmd_code_types_flags[m_cmd].type)
-    {
-    case TYPE_TCP_WCHAR_STR:
-        {
-            packet_t dynamicSize = ValueConverter::from_uint16(m_data.size());
-            payload.insert(payload.end(), dynamicSize.begin(), dynamicSize.end());
-            break;
-        }
-    case TYPE_TCP_FLOAT:
-    case TYPE_TCP_DOUBLE_OR_INT_SIGNED:
-    case TYPE_TCP_UINT32:
-    case TYPE_TCP_UINT16:
-    case TYPE_TCP_UINT8:
-    case TYPE_TCP_DATETIME:
-    case TYPE_TCP_UINT64:
-    case TYPE_TCP_UUID_16_BYTES:
-        m_data.resize(g_type_sizes[g_cmd_code_types_flags[m_cmd].type]);
-        break;
-    case TYPE_TCP_DATA_SET:
-        // wtf here?
-        m_data.resize(sizeof(uint16_t));
-        break;
-    case TYPE_TCP_DYNAMIC_UINT32_SIZE:
-        {
-            packet_t dynamicSize = ValueConverter::from_uint32(m_data.size());
-            payload.insert(payload.end(), dynamicSize.begin(), dynamicSize.end());
-            break;
-        }
-    default:
-        throw std::exception("Got unknown enum type for parsing entry");
-        break;
-    }
-    */
-    payload.insert(payload.end(), m_data.begin(), m_data.end());
+    Utils::concatArrays(payload, m_data);
     return payload;
 }
 

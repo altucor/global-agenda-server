@@ -12,6 +12,7 @@ public:
     DataSet(packet_iterator_t &it, packet_iterator_t end);
     DataSet(EntryHeader entryHeader, packet_iterator_t &it, packet_iterator_t end);
     DataSet(const CMD_CODE cmd, std::vector<AnonymousArray> anonArrays);
+    packet_t build();
     void dbg_print();
 private:
     void m_parse(packet_iterator_t &it, packet_iterator_t end);

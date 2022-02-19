@@ -10,7 +10,7 @@ Packet::Packet()
 }
 
 Packet::Packet(const CMD_CODE cmd)
-    : m_packetHeader(cmd)
+    : m_packetHeader(cmd, 0)
 {
 
 }
@@ -34,12 +34,19 @@ Packet::~Packet()
 std::vector<uint8_t> Packet::build()
 {
     std::vector<uint8_t> payload;
+    m_packetHeader.setSize(m_entries.size() + m_dataSets.size());
     Utils::concatArrays(payload, m_packetHeader.build()); // append count of entries
     for(auto &entry : m_entries)
     {
         std::vector<uint8_t> entryData = entry.build();
         //entry.dbg_print();
         Utils::concatArrays(payload, entryData);
+    }
+    for(auto &dataSet : m_dataSets)
+    {
+        std::vector<uint8_t> dataSetData = dataSet.build();
+        //dataSet.dbg_print();
+        Utils::concatArrays(payload, dataSetData);
     }
 
     return payload;
